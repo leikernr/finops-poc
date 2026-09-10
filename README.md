@@ -1,6 +1,6 @@
 # Live Cloud Cost Anomaly Detection
 
-I built this project to solve a problem i am seeing in my cloud class: computing bills that these guys didnt see coming. These guys spin up VPC, instances, etc. and keep clicking not wanting to wait or using the cli and doubling the messages. So i started thinking about it and applied that logic to me learning, Kafka + Flink + Grafana from your template.
+I built this project to solve a problem i am seeing in my cloud class: computing bills that these guys didnt see coming. These guys spin up VPC, instances, etc. and keep clicking not wanting to wait or using the cli and doubling the messages. So i started thinking about it and applied that logic to me learning, Kafka + Flink + Grafana.
 
 Many companies rent servers and databases from providers like Amazon or Azure. Sometimes, a software bug causes those servers to work too hard, which can cost the company thousands of dollars in a matter of hours. This project is a working prototype that catches those expensive mistakes the moment they happen.
 
@@ -48,4 +48,4 @@ python anomaly_detector.py
 Step 5: View the Dashboard
 Open Grafana to view the live dashboard. You can import the grafana_dashboard.json file included in this folder to see the exact layout I designed.
 
-
+more coming soon!

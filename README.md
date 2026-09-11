@@ -5,7 +5,6 @@ I built this project to solve a problem i am seeing in my cloud class: computing
 Many companies rent servers and databases from providers like Amazon or Azure. Sometimes, a software bug causes those servers to work too hard, which can cost the company thousands of dollars in a matter of hours. This project is a working prototype that catches those expensive mistakes the moment they happen.
 
 ## How It Works
-Sorry if its wrong just taking my research and dropping it here if im wrong please let me know.
 
 The system operates in a few steps:
 

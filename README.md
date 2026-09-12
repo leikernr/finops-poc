@@ -16,7 +16,26 @@ The system operates in a few steps:
 
 ## Instructions to Run the Project
 
-You will need Docker Desktop, Python, and Conda installed on your computer.
+You will need Docker and Conda.
+
+- **Docker** -- Docker Desktop on Mac and Windows, Docker Engine plus the
+  Compose v2 plugin on Linux.
+- **Conda** -- on macOS, miniforge is the easiest route. It defaults to the
+  conda-forge channel, which avoids Anaconda's commercial terms:
+
+  ```bash
+  brew install --cask miniforge
+  conda init zsh        # then restart your terminal
+  ```
+
+  **The `conda init` step is required.** Steps 3 and 4 below run
+  `conda activate`, which fails with `CondaError: Run 'conda init' before
+  'conda activate'` until your shell has been configured. Step 2 will still
+  appear to succeed without it, so it is easy to miss.
+
+You do **not** need to install Java, and you do not need a particular version
+of Python on your machine -- `setup.sh` installs Python 3.10 and Java 11 inside
+the environment it creates, leaving whatever you already have untouched.
 
 Step 1: Start the Databases
 Open your terminal in the project folder and start the database containers:

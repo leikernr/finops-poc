@@ -61,7 +61,7 @@ else
     exit 1
 fi
 
-echo "Downloading Flink connectors straight into PyFlink's library folder to bypass Java 17 errors..."
+echo "Downloading Flink connectors into PyFlink's library folder..."
 # Ask the interpreter where PyFlink actually landed instead of assuming the
 # layout. The hardcoded path baked in three assumptions -- a lowercase lib/
 # directory, a python3.10/ version segment, and site-packages/ -- and mkdir -p

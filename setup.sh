@@ -62,8 +62,14 @@ else
 fi
 
 echo "Downloading Flink connectors straight into PyFlink's library folder to bypass Java 17 errors..."
-FLINK_LIB_DIR="$CONDA_PREFIX/lib/python3.10/site-packages/pyflink/lib"
+# Ask the interpreter where PyFlink actually landed instead of assuming the
+# layout. The hardcoded path baked in three assumptions -- a lowercase lib/
+# directory, a python3.10/ version segment, and site-packages/ -- and mkdir -p
+# would happily create a wrong directory rather than fail, so a mismatch
+# produced a successful-looking setup and a classpath error much later.
+FLINK_LIB_DIR="$("$CONDA_PREFIX/bin/python" -c 'import os, pyflink; print(os.path.join(os.path.dirname(pyflink.__file__), "lib"))')"
 mkdir -p "$FLINK_LIB_DIR"
+echo "PyFlink library folder: $FLINK_LIB_DIR"
 
 cd "$FLINK_LIB_DIR"
 

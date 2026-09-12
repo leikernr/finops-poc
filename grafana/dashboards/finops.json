@@ -89,7 +89,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id,\n  total_cost_usd\nFROM finops_cost\nORDER BY time ASC"
+          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id,\n  total_cost_usd\nFROM finops_cost\nWHERE $__timeFilter(window_end)\nORDER BY time ASC"
         }
       ]
     },
@@ -145,7 +145,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id,\n  total_cost_usd\nFROM finops_cost\nWHERE is_anomaly = true\nORDER BY time DESC\nLIMIT 10"
+          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id,\n  total_cost_usd\nFROM finops_cost\nWHERE is_anomaly = true\n  AND $__timeFilter(window_end)\nORDER BY time DESC\nLIMIT 10"
         }
       ]
     }

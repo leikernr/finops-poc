@@ -89,7 +89,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id,\n  total_cost_usd\nFROM finops_cost\nWHERE $__timeFilter(window_end)\nORDER BY time ASC"
+          "rawSql": "SELECT\n  window_end AS \"time\",\n  resource_id AS metric,\n  total_cost_usd\nFROM finops_cost\nWHERE $__timeFilter(window_end)\nORDER BY time ASC"
         }
       ]
     },

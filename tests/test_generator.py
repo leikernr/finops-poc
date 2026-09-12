@@ -1,5 +1,5 @@
-import pytest
-from data_generator import generate_metric, RESOURCES
+from data_generator import RESOURCES, generate_metric
+
 
 def test_generate_metric_normal():
     metric = generate_metric(spike=False)

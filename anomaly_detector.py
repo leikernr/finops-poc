@@ -1,21 +1,23 @@
-import os
 import logging
+import os
+
 from pyflink.table import EnvironmentSettings, TableEnvironment
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 def main():
     db_password = os.getenv("POSTGRES_PASSWORD", "finops_password")
     db_user = os.getenv("POSTGRES_USER", "finops")
     anomaly_threshold = os.getenv("ANOMALY_THRESHOLD", "10.0")
 
-    logging.info("Initializing Flink Table Environment...")
+    logger.info("Initializing Flink Table Environment...")
     env_settings = EnvironmentSettings.in_streaming_mode()
     t_env = TableEnvironment.create(env_settings)
     t_env.get_config().set("pipeline.closure-cleaner-level", "NONE")
     t_env.get_config().set("table.exec.source.idle-timeout", "1000 ms")
 
-    logging.info("Defining Kafka Source Table...")
+    logger.info("Defining Kafka Source Table...")
     t_env.execute_sql("""
         CREATE TABLE cloud_metrics (
             `timestamp` TIMESTAMP(3),
@@ -32,7 +34,7 @@ def main():
         )
     """)
 
-    logging.info("Defining Postgres Sink Table...")
+    logger.info("Defining Postgres Sink Table...")
     t_env.execute_sql(f"""
         CREATE TABLE finops_cost (
             window_end TIMESTAMP(3),
@@ -48,7 +50,7 @@ def main():
         )
     """)
 
-    logging.info("Starting Streaming Job...")
+    logger.info("Starting Streaming Job...")
     t_env.execute_sql(f"""
         INSERT INTO finops_cost
         SELECT 

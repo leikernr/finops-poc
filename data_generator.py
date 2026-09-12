@@ -1,18 +1,20 @@
-import time
 import json
-import random
 import logging
-from typing import Dict, Any
+import random
+import time
 from datetime import datetime, timezone
+from typing import Any
+
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 TOPIC = 'cloud_metrics'
 RESOURCES = ['ec2-web-server', 'lambda-auth', 'rds-main-db', 'ec2-worker-node']
 
-def generate_metric(spike: bool = False) -> Dict[str, Any]:
+def generate_metric(spike: bool = False) -> dict[str, Any]:
     if spike:
         resource_id = 'ec2-worker-node'
         cpu_usage = random.uniform(800.0, 1000.0)
@@ -36,17 +38,17 @@ def main() -> None:
                 bootstrap_servers=['localhost:9092'],
                 value_serializer=lambda x: json.dumps(x).encode('utf-8')
             )
-            logging.info("Connected to Confluent Kafka!")
+            logger.info("Connected to Confluent Kafka!")
             break
         except NoBrokersAvailable:
-            logging.warning(f"Waiting for Kafka to start... (Attempt {attempt+1}/{max_retries})")
+            logger.warning(f"Waiting for Kafka to start... (Attempt {attempt+1}/{max_retries})")
             time.sleep(2)
             
     if not producer:
-        logging.error("Could not connect to Kafka. Exiting.")
+        logger.error("Could not connect to Kafka. Exiting.")
         return
 
-    logging.info(f"Starting data generator for topic '{TOPIC}'...")
+    logger.info(f"Starting data generator for topic '{TOPIC}'...")
 
     try:
         counter = 0
@@ -59,16 +61,16 @@ def main() -> None:
             future.get(timeout=10) # Block until sent successfully
             
             if spike:
-                logging.warning(f"🚨 ANOMALY INJECTED: {metric}")
+                logger.warning(f"🚨 ANOMALY INJECTED: {metric}")
             else:
-                logging.info(f"Sent: {metric}")
+                logger.info(f"Sent: {metric}")
                 
             counter += 1
             time.sleep(1)
     except KeyboardInterrupt:
-        logging.info("Stopping generator...")
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+        logger.info("Stopping generator...")
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Unexpected error: {e}")
     finally:
         producer.flush()
         producer.close()

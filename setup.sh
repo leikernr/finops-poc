@@ -1,10 +1,32 @@
 #!/bin/bash
 set -e
 
+ENV_NAME="finops-env"
+
 echo "Setting up Conda environment for PyFlink (requires Python <= 3.10)..."
+
+# Fail immediately if conda is missing. Without this guard the command
+# substitution below expands to an empty string, `eval ""` succeeds, and the
+# first error the user sees comes from `conda create` on the next line --
+# which reads as an env-creation problem rather than "conda is not installed".
+if ! command -v conda >/dev/null 2>&1; then
+    echo "ERROR: conda was not found on PATH. See the README prerequisites." >&2
+    exit 1
+fi
+
 eval "$(conda shell.bash hook)"
-conda create -y -n finops-env python=3.10
-conda activate finops-env
+
+# Creating an env that already exists is an error, and under `set -e` that
+# aborts the script -- so re-running setup.sh after any earlier failure failed
+# again, at a different line. The JAR downloads below are already guarded for
+# re-runs; this makes env creation behave the same way.
+if conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
+    echo "Conda env '$ENV_NAME' already exists; reusing it."
+else
+    conda create -y -n "$ENV_NAME" python=3.10
+fi
+
+conda activate "$ENV_NAME"
 
 CONDA_PIP="$CONDA_PREFIX/bin/pip"
 

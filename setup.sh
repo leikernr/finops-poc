@@ -35,6 +35,20 @@ $CONDA_PIP install setuptools==69.0.3
 $CONDA_PIP install kafka-python==2.0.2
 $CONDA_PIP install apache-flink==1.17.2 --no-build-isolation
 
+# Flink 1.17 targets Java 11. Install it into the env rather than depending on
+# whatever JDK happens to be on the host PATH, which is the single most
+# variable prerequisite here -- Homebrew, apt and the Adoptium installer all
+# hand out a current JDK by default. Installing it here keeps the system Java
+# untouched and puts the right one first on PATH only while the env is active.
+# A JDK mismatch does not fail in this script; it fails much later, inside
+# anomaly_detector.py, as a JVM error surfaced through a Python stack trace.
+if "$CONDA_PREFIX/bin/java" -version >/dev/null 2>&1; then
+    echo "Java already present in the env: $("$CONDA_PREFIX/bin/java" -version 2>&1 | head -1)"
+else
+    echo "Installing Java 11 into the environment (Flink 1.17 targets Java 11)..."
+    conda install -y -c conda-forge openjdk=11
+fi
+
 # Pick whichever downloader this machine actually has, rather than assuming one.
 # macOS ships curl and no wget; most Linux distros ship both; minimal images
 # (Fedora minimal, RHEL UBI) often ship only curl.

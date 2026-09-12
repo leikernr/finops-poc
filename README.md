@@ -46,6 +46,9 @@ python anomaly_detector.py
 ```
 
 Step 5: View the Dashboard
-Open Grafana to view the live dashboard. You can import the grafana_dashboard.json file included in this folder to see the exact layout I designed.
+Open http://localhost:3000 and log in with `admin` / `admin`. Grafana comes up
+with the other containers in Step 1, and the "Live FinOps PoC" dashboard and its
+Postgres connection are provisioned automatically -- there is nothing to import.
+The dashboard refreshes every 10 seconds, matching the Flink window size.
 
 more coming soon!

@@ -17,56 +17,53 @@ The system operates in a few steps:
 
 You will need Docker and Conda.
 
-- **Docker** -- Docker Desktop on Mac and Windows, Docker Engine plus the
-  Compose v2 plugin on Linux.
-- **Conda** -- on macOS, miniforge is the easiest route. It defaults to the
-  conda-forge channel, which avoids Anaconda's commercial terms:
+- **Docker** -- Docker Desktop on Mac and Windows, Docker Engine plus the Compose v2 plugin on Linux.
+- **Conda** -- on macOS, miniforge is the easiest route.
 
   ```bash
   brew install --cask miniforge
   conda init zsh        # then restart your terminal
   ```
 
-  **The `conda init` step is required.** Steps 3 and 4 below run
-  `conda activate`, which fails with `CondaError: Run 'conda init' before
-  'conda activate'` until your shell has been configured. Step 2 will still
-  appear to succeed without it, so it is easy to miss.
+  **The `conda init` step is required.** Steps 4 and 5 below run `conda activate`, which fails until your shell has been configured. Step 3 will still appear to succeed without it, so it is easy to miss.
 
-You do **not** need to install Java, and you do not need a particular version
-of Python on your machine -- `setup.sh` installs Python 3.10 and Java 11 inside
-the environment it creates, leaving whatever you already have untouched.
+You do **not** need to install Java, and you do not need a particular version of Python on your machine -- `setup.sh` installs Python 3.10 and Java 11 inside the environment it creates, leaving whatever you already have untouched.
 
-Step 1: Start the Databases
+Step 1: Set Up Credentials
+Create a secure `.env` file based on the provided example:
+```bash
+cp .env.example .env
+```
+
+Step 2: Start the Databases
 Open your terminal in the project folder and start the database containers:
 ```bash
 docker compose up -d
 ```
 
-Step 2: Set Up the Environment
+Step 3: Set Up the Environment
 Run the setup script to install the necessary Python packages:
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
+*(Windows users: run `setup.bat` instead)*
 
-Step 3: Start the Data Generator
+Step 4: Start the Data Generator
 In a new terminal window, activate the environment and start the simulator:
 ```bash
 conda activate finops-env
 python data_generator.py
 ```
 
-Step 4: Start the Anomaly Detector
+Step 5: Start the Anomaly Detector
 In a second terminal window, activate the environment and start the streaming engine:
 ```bash
 conda activate finops-env
 python anomaly_detector.py
 ```
 
-Step 5: View the Dashboard
-Open http://localhost:3000 and log in with `admin` / `admin`. Grafana comes up
-with the other containers in Step 1, and the "Live FinOps PoC" dashboard and its
-Postgres connection are provisioned automatically -- there is nothing to import.
-The dashboard refreshes every 10 seconds, matching the Flink window size.
+Step 6: View the Dashboard
+Open http://localhost:3000 and log in with `admin` / `admin`. Grafana comes up with the other containers in Step 2, and the "Live FinOps PoC" dashboard and its Postgres connection are provisioned automatically -- there is nothing to import.
 
 more coming soon!

@@ -1,71 +1,77 @@
 import time
 import json
 import random
+import logging
+from typing import Dict, Any
+from datetime import datetime, timezone
 from kafka import KafkaProducer
-from datetime import datetime
+from kafka.errors import NoBrokersAvailable
 
-# Initialize Kafka Producer
-# Wait for broker to be available
-while True:
-    try:
-        producer = KafkaProducer(
-            bootstrap_servers=['localhost:9092'],
-            value_serializer=lambda x: json.dumps(x).encode('utf-8')
-        )
-        print("Connected to Kafka (Redpanda)!")
-        break
-    except Exception as e:
-        print("Waiting for Kafka to start...")
-        time.sleep(2)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 TOPIC = 'cloud_metrics'
+RESOURCES = ['ec2-web-server', 'lambda-auth', 'rds-main-db', 'ec2-worker-node']
 
-def generate_metric(spike=False):
-    resources = ['ec2-web-server', 'lambda-auth', 'rds-main-db', 'ec2-worker-node']
-    
-    resource_id = random.choice(resources)
-    base_cpu = random.uniform(10.0, 40.0)
-    
-    # We will measure cost based on cpu_usage units in our Flink job
-    if spike and resource_id == 'ec2-worker-node':
-        # Simulate a massive CPU/instance scale-out anomaly
+def generate_metric(spike: bool = False) -> Dict[str, Any]:
+    if spike:
+        resource_id = 'ec2-worker-node'
         cpu_usage = random.uniform(800.0, 1000.0)
     else:
-        cpu_usage = base_cpu
+        resource_id = random.choice(RESOURCES)
+        cpu_usage = random.uniform(10.0, 40.0)
 
-    # Round timestamp to seconds for easier windowing in PoC
-    data = {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+    return {
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
         'resource_id': resource_id,
         'cpu_usage': round(cpu_usage, 2)
     }
-    return data
 
-print(f"Starting data generator for topic '{TOPIC}'...")
+def main() -> None:
+    max_retries = 30
+    producer = None
+    
+    for attempt in range(max_retries):
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=['localhost:9092'],
+                value_serializer=lambda x: json.dumps(x).encode('utf-8')
+            )
+            logging.info("Connected to Confluent Kafka!")
+            break
+        except NoBrokersAvailable:
+            logging.warning(f"Waiting for Kafka to start... (Attempt {attempt+1}/{max_retries})")
+            time.sleep(2)
+            
+    if not producer:
+        logging.error("Could not connect to Kafka. Exiting.")
+        return
 
-try:
-    counter = 0
-    while True:
-        # Inject an anomaly roughly every 30 seconds
-        spike = (counter > 0 and counter % 30 == 0)
-        
-        # When spiking, ensure we pick the worker node
-        metric = generate_metric(spike)
-        if spike:
-            metric['resource_id'] = 'ec2-worker-node'
-            metric['cpu_usage'] = round(random.uniform(800.0, 1000.0), 2)
+    logging.info(f"Starting data generator for topic '{TOPIC}'...")
+
+    try:
+        counter = 0
+        while True:
+            spike = (counter > 0 and counter % 30 == 0)
             
-        producer.send(TOPIC, value=metric)
-        
-        if spike:
-            print(f"🚨 ANOMALY INJECTED: {metric}")
-        else:
-            print(f"Sent: {metric}")
+            metric = generate_metric(spike)
+                
+            future = producer.send(TOPIC, value=metric)
+            future.get(timeout=10) # Block until sent successfully
             
-        counter += 1
-        time.sleep(1) # Send 1 event per second
-except KeyboardInterrupt:
-    print("Stopping generator...")
-finally:
-    producer.flush()
-    producer.close()
+            if spike:
+                logging.warning(f"🚨 ANOMALY INJECTED: {metric}")
+            else:
+                logging.info(f"Sent: {metric}")
+                
+            counter += 1
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logging.info("Stopping generator...")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+    finally:
+        producer.flush()
+        producer.close()
+
+if __name__ == '__main__':
+    main()

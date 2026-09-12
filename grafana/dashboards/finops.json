@@ -28,7 +28,7 @@
       "1d"
     ]
   },
-  "refresh": "",
+  "refresh": "10s",
   "panels": [
     {
       "id": 1,

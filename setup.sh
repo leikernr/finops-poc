@@ -42,8 +42,14 @@ $CONDA_PIP install apache-flink==1.17.2 --no-build-isolation
 # untouched and puts the right one first on PATH only while the env is active.
 # A JDK mismatch does not fail in this script; it fails much later, inside
 # anomaly_detector.py, as a JVM error surfaced through a Python stack trace.
-if "$CONDA_PREFIX/bin/java" -version >/dev/null 2>&1; then
-    echo "Java already present in the env: $("$CONDA_PREFIX/bin/java" -version 2>&1 | head -1)"
+# Ask conda what is installed rather than probing a path: conda-forge's openjdk
+# puts the JVM at $CONDA_PREFIX/lib/jvm, not $CONDA_PREFIX/bin, so a path probe
+# reports "missing" even when it is installed. Conda's activation sets JAVA_HOME
+# to that lib/jvm directory, which is what PyFlink reads (see
+# pyflink_gateway_server.find_java_executable) -- so the env's Java 11 is used
+# even though `java` on PATH may still be the host's JDK.
+if conda list -n "$ENV_NAME" 2>/dev/null | grep -qE '^openjdk[[:space:]]'; then
+    echo "Java already present in the env; skipping install."
 else
     echo "Installing Java 11 into the environment (Flink 1.17 targets Java 11)..."
     conda install -y -c conda-forge openjdk=11

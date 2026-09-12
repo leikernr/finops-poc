@@ -1,40 +1,34 @@
 # Grafana Setup for Live FinOps PoC
 
-Since you already have Grafana running at `http://localhost:3000`, follow these steps to visualize the data.
+**Nothing to set up.** Grafana is part of `docker-compose.yml`, so `docker compose up -d`
+(Step 1 of the README) starts it along with Redpanda and Postgres.
 
-## 1. Add Postgres as a Data Source
+Open <http://localhost:3000> and log in with `admin` / `admin`. The
+**Live FinOps PoC** dashboard is the home page.
 
-1. Open Grafana and go to **Connections > Data Sources**.
-2. Click **Add new data source** and search for **PostgreSQL**.
-3. Configure with the following settings:
-   - **Host:** `localhost:5432` (or `host.docker.internal:5432` depending on your network)
-   - **Database:** `finops_db`
-   - **User:** `finops`
-   - **Password:** `finops_password`
-   - **TLS/SSL Mode:** `disable`
-4. Click **Save & Test**.
+Both of these are provisioned from files in `grafana/`, so they exist on a fresh
+clone with no clicking:
 
-## 2. Create the "Live Cloud Burn" Dashboard
+| What | Defined in |
+|---|---|
+| Postgres datasource (uid `finops-postgres`) | `grafana/provisioning/datasources/postgres.yml` |
+| Dashboard | `grafana/dashboards/finops.json` |
 
-1. Go to **Dashboards** and click **New > New Dashboard > Add visualization**.
-2. Select your PostgreSQL data source.
-3. Switch the query editor to **Code** (SQL mode) and enter the following query:
+## The panels
+
+**Live Cloud Burn** — cost per 10-second window, one series per resource:
 
 ```sql
 SELECT
   window_end AS "time",
-  resource_id,
+  resource_id AS metric,
   total_cost_usd
 FROM finops_cost
+WHERE $__timeFilter(window_end)
 ORDER BY time ASC
 ```
 
-4. Format as **Time series**. This will show the cost of each resource over time.
-
-## 3. Create the "Anomalies Alert" Panel
-
-1. Add another panel to the dashboard.
-2. Select PostgreSQL data source and enter this query:
+**Anomalies Alert** — the ten most recent windows that tripped the threshold:
 
 ```sql
 SELECT
@@ -43,7 +37,28 @@ SELECT
   total_cost_usd
 FROM finops_cost
 WHERE is_anomaly = true
-ORDER BY time ASC
+  AND $__timeFilter(window_end)
+ORDER BY time DESC
+LIMIT 10
 ```
 
-3. Change the visualization type to **Stat** or **Table** to clearly see any resource that has spiked and triggered the anomaly alert.
+`$__timeFilter(window_end)` is a Grafana macro that expands to a `BETWEEN` against
+the time picker, so each refresh reads only the visible range rather than the
+whole table.
+
+## Editing
+
+Panels can be edited in the UI, but changes are overwritten when Grafana reloads
+the provisioned file. To keep an edit, use **Dashboard settings > JSON Model**,
+copy the JSON, and write it back to `grafana/dashboards/finops.json`.
+
+## If the panels are empty
+
+The dashboard defaults to the last 5 minutes and the Flink job only writes when
+a 10-second window closes, so allow a few seconds after starting the generator
+and detector. If it stays empty, check that rows are arriving:
+
+```bash
+docker compose exec postgres psql -U finops -d finops_db -c \
+  'SELECT count(*), max(window_end) FROM finops_cost;'
+```

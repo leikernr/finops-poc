@@ -1,6 +1,6 @@
 # Live Cloud Cost Anomaly Detection
 
-I built this project to solve a problem i am seeing in my cloud class: computing bills that these guys didnt see coming. These guys spin up VPC, instances, etc. and keep clicking not wanting to wait or using the cli and doubling the messages. So i started thinking about it and applied that logic to me learning, Kafka + Flink + Grafana from your template.
+I built this project to solve a problem i am seeing in my cloud class: computing bills that these guys didnt see coming. These guys spin up VPC, instances, etc. and keep clicking not wanting to wait or using the cli and doubling the messages. So i started thinking about it and applied that logic to me learning, Kafka + Flink + Grafana.
 
 Many companies rent servers and databases from providers like Amazon or Azure. Sometimes, a software bug causes those servers to work too hard, which can cost the company thousands of dollars in a matter of hours. This project is a working prototype that catches those expensive mistakes the moment they happen.
 
@@ -10,7 +10,7 @@ Sorry if its wrong just taking my research and dropping it here if im wrong plea
 The system operates in a few steps:
 
 1. Data Generation: A Python script acts like a fleet of servers, constantly reporting how much computing power they are using. Every 30 seconds, it fakes a massive usage spike.
-2. The Nervous System: The data is sent to a message broker called Redpanda. You can think of this as a high speed conveyor belt for data.
+2. The Nervous System: The data is sent to a message broker called Confluent Kafka. You can think of this as a high speed conveyor belt for data.
 3. Real Time Analysis: A streaming engine called Apache Flink watches the conveyor belt. It groups the data into ten second windows, calculates the financial cost, and flags any sudden spikes.
 4. Storage and Display: The final calculations are saved into a PostgreSQL database. A visualization tool called Grafana then reads that database to display a live dashboard of our costs and alerts.
 

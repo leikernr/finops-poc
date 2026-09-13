@@ -19,6 +19,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # Create the topic explicitly rather than relying on auto-creation.
+  # Auto-creation fires on the PRODUCE path, so a consumer that starts first
+  # gets UnknownTopicOrPartitionException and the Flink job fails at enumerator
+  # startup rather than waiting. Creating it here means neither start order
+  # breaks: the detector can run before the generator. Exits once done.
+  create-topic:
+    image: confluentinc/confluent-local:7.5.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["kafka-topics"]
+    command:
+      - "--bootstrap-server"
+      - "kafka:29092"
+      - "--create"
+      - "--if-not-exists"
+      - "--topic"
+      - "cloud_metrics"
+      - "--partitions"
+      - "1"
+      - "--replication-factor"
+      - "1"
+    restart: "no"
+
   postgres:
     image: postgres:15
     env_file:

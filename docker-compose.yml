@@ -7,11 +7,41 @@ services:
       - "127.0.0.1:9092:9092"
     environment:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      # The image's default binds PLAINTEXT to localhost:29092 -- loopback inside the
+      # container -- while advertising it as kafka:29092. Host clients are unaffected
+      # (they use PLAINTEXT_HOST via the published port) but no other container can
+      # connect, because the address it is told to use is not bound. Bind it to 0.0.0.0
+      # so in-network clients such as create-topic below can reach the broker.
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://localhost:29093,PLAINTEXT_HOST://0.0.0.0:9092
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Create the topic explicitly rather than relying on auto-creation.
+  # Auto-creation fires on the PRODUCE path, so a consumer that starts first
+  # gets UnknownTopicOrPartitionException and the Flink job fails at enumerator
+  # startup rather than waiting. Creating it here means neither start order
+  # breaks: the detector can run before the generator. Exits once done.
+  create-topic:
+    image: confluentinc/confluent-local:7.5.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["kafka-topics"]
+    command:
+      - "--bootstrap-server"
+      - "kafka:29092"
+      - "--create"
+      - "--if-not-exists"
+      - "--topic"
+      - "cloud_metrics"
+      - "--partitions"
+      - "1"
+      - "--replication-factor"
+      - "1"
+    restart: "no"
 
   postgres:
     image: postgres:15
